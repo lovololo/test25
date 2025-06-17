@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: black;
+        color: white;
+      }
+
+      .a-enter-vr-button {
+        display: none !important;
+      }
+
+      #toggleInfo,
+      #closeInfo {
+        position: fixed;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999;
+        padding: 16px 32px;
+        border-radius: 28px;
+        background-color: rgba(0, 0, 0, 0.6);
+        border: none;
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease, transform 0.3s ease;
+      }
+
+      #toggleInfo:hover,
+      #closeInfo:hover {
+        transform: translateX(-50%) scale(1.1);
+      }
+
+      #infoText {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80vw;
+        max-width: 600px;
+        max-height: 80vh;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 30px;
+        box-sizing: border-box;
+        font-size: 16px;
+        line-height: 1.5;
+        overflow-y: auto;
+        z-index: 999;
+        animation: slideUp 0.5s ease forwards;
+        border-radius: 16px;
+        text-align: left;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translate(-50%, 100%);
+        }
+        to {
+          transform: translate(-50%, -50%);
+        }
+      }
+
+      @keyframes slideDown {
+        from {
+          transform: translate(-50%, -50%);
+        }
+        to {
+          transform: translate(-50%, 100%);
+        }
+      }
+
+      #scanText {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        z-index: 998;
+        text-align: center;
+        display: none;
+      }
+
+      #startOverlay {
+        position: fixed;
+        z-index: 10000;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding-top: 10vh;
+      }
+
+      #startOverlay small {
+        font-size: 16px;
+        margin-bottom: 4px;
+        opacity: 0.8;
+      }
+
+      #startText {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        padding: 10px 20px;
+      }
+    </style>
+
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  </head>
+
+  <body>
+    <!-- Boutons info -->
+    <button id="toggleInfo">C’est quoi ?</button>
+    <button id="closeInfo" style="display: none;">×</button>
+
+    <!-- Texte temporaire de scan -->
+    <div id="scanText">Regardez l'affiche</div>
+
+    <!-- Panneau d'information -->
+    <div id="infoText">
+      Le M-497 Black Beetle est un train expérimental inventé en 1966 par la compagnie américaine New York Central Railroad. C’est un train sur lequel on ajoute deux moteurs à réaction, les mêmes que ceux utilisés sur des avions militaires. Même si ce train est rapide et peu coûteux à construire, il n’est jamais utilisé. Il présente plusieurs problèmes : il ne peut pas reculer, et ses moteurs prennent beaucoup de place en hauteur. En plus, la compagnie qui le construit fusionne avec une autre, qui travaille déjà sur un autre projet de train soutenu par le gouvernement. Après les essais, le train est abandonné en 1984.
+    </div>
+
+    <!-- Overlay de démarrage -->
+    <div id="startOverlay">
+      <small>Acceptez les autorisations</small>
+      <div id="startText">Touchez l'écran pour démarrer</div>
+    </div>
+
+    <!-- Scène AR -->
+    <a-scene
+      mindar-image="imageTargetSrc: targets.mind; filterMinCF: 0.001; filterBeta: 0.06; missTolerance: 0.01; warmupTolerance: 0.005; maxTrack: 1; uiScanning: false"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false">
+
+      <a-assets>
+        <img id="card" src="image.png" />
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity id="marker" mindar-image-target="targetIndex: 0">
+        <a-plane
+          src="#card"
+          position="0 0 0"
+          height="1.03"
+          width="1.03"
+          rotation="0 0 0"
+          smooth="true"
+          smoothCount="1"
+          smoothTolerance="0.1"
+          smoothThreshold="1">
+        </a-plane>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      const toggleButton = document.getElementById('toggleInfo');
+      const closeButton = document.getElementById('closeInfo');
+      const infoText = document.getElementById('infoText');
+      const scanText = document.getElementById('scanText');
+      const marker = document.querySelector("#marker");
+      const sceneEl = document.querySelector("a-scene");
+      const startOverlay = document.getElementById("startOverlay");
+
+      let hasSeenTarget = false;
+
+      sceneEl.addEventListener("arReady", () => {
+        if (!hasSeenTarget) {
+          scanText.style.display = "block";
+        }
+      });
+
+      marker.addEventListener("targetFound", () => {
+        if (!hasSeenTarget) {
+          hasSeenTarget = true;
+          scanText.remove();
+        }
+      });
+
+      toggleButton.addEventListener('click', () => {
+        infoText.style.display = 'block';
+        infoText.style.animation = 'slideUp 0.5s ease forwards';
+        closeButton.style.display = 'block';
+        toggleButton.style.display = 'none';
+      });
+
+      closeButton.addEventListener('click', () => {
+        infoText.style.animation = 'slideDown 0.5s ease forwards';
+        setTimeout(() => {
+          infoText.style.display = 'none';
+          closeButton.style.display = 'none';
+          toggleButton.style.display = 'block';
+        }, 500);
+      });
+
+      const startAR = async () => {
+        try {
+          const mindarComponent = sceneEl.components["mindar-image"];
+          if (mindarComponent && !mindarComponent.active) {
+            await mindarComponent.start();
+            console.log("MindAR démarré");
+          }
+        } catch (e) {
+          console.warn("Erreur MindAR :", e);
+        }
+      };
+
+      const enableAR = () => {
+        window.removeEventListener("touchstart", enableAR);
+        window.removeEventListener("click", enableAR);
+        startOverlay.style.display = "none";
+        startAR();
+      };
+
+      window.addEventListener("touchstart", enableAR, { once: true });
+      window.addEventListener("click", enableAR, { once: true });
+    </script>
+  </body>
+</html>
